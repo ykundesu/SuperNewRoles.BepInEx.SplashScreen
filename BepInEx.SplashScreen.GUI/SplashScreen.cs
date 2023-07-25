@@ -40,6 +40,7 @@ namespace BepInEx.SplashScreen
                     checkedListBox1.SetItemChecked(1, true);
                     AppendToItem(1, DoneStr);
                     SetStatusMain("Finished applying patchers.");
+                    SetStatusDetail("Plugins should start loading soon.\nIn case loading is stuck, check your entry point.");
                     break;
 
                 case LoadEvent.ChainloaderStart:
