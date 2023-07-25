@@ -50,7 +50,7 @@ namespace BepInEx.SplashScreen
                     // Get game name
                     _mainForm.Text = $@"{gameProcess.ProcessName} is loading...";
 
-                    if (gameProcess.MainModule == null) 
+                    if (gameProcess.MainModule == null)
                         throw new FileNotFoundException("gameProcess.MainModule is null");
 
                     // Get game location and icon
@@ -182,12 +182,13 @@ namespace BepInEx.SplashScreen
         {
             try
             {
+                var temporarilyHidden = false;
                 var gameProcess = (Process)processArg;
-                while (true)
+                while (!_mainForm.IsDisposed)
                 {
                     Thread.Sleep(100);
 
-                    if (!_mainForm.Visible)
+                    if (!_mainForm.Visible && !temporarilyHidden)
                         continue;
 
                     if (gameProcess.MainWindowHandle == IntPtr.Zero ||
@@ -198,6 +199,22 @@ namespace BepInEx.SplashScreen
                         // Need to refresh the process if the window handle is not yet valid or it will keep grabbing the old one
                         gameProcess.Refresh();
                         continue;
+                    }
+
+                    // Detect Unity's pre-launch resoultion and hotkey configuration window and hide the splash until it is closed
+                    // It seems like it's not possible to localize this window so the title check should be fine? Hopefully?
+                    if (gameProcess.MainWindowTitle.EndsWith(" Configuration"))
+                    {
+                        _mainForm.Visible = false;
+                        temporarilyHidden = true;
+                        gameProcess.Refresh();
+                        continue;
+                    }
+
+                    if (temporarilyHidden)
+                    {
+                        temporarilyHidden = false;
+                        _mainForm.Visible = true;
                     }
 
                     if (!NativeMethods.GetWindowRect(new HandleRef(_mainForm, gameProcess.MainWindowHandle), out var rct))
