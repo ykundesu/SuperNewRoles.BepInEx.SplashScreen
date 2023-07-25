@@ -28,7 +28,7 @@ namespace BepInEx.SplashScreen
         {
             if (_disposed) return;
 
-            if (eventArgs.Source is ManualLogSource mls && mls.SourceName == "BepInEx" && eventArgs.Data != null)
+            if (eventArgs.Source.SourceName == "BepInEx" && eventArgs.Data != null)
             {
                 try
                 {
