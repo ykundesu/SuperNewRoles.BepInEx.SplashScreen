@@ -54,7 +54,7 @@ namespace BepInEx.SplashScreen
             try
             {
                 var config = (ConfigFile)AccessTools.Property(typeof(ConfigFile), "CoreConfig").GetValue(null, null);
-                if (!config.Bind("Splash screen", "Show start-up progress splash screen", true, "Display a splash screen with information about game load progress on game start-up.").Value)
+                if (!config.Bind("SplashScreen", "Enabled", true, "Display a splash screen with information about game load progress on game start-up.").Value)
                     return;
 
                 var guiExecutablePath = Path.Combine(Path.GetDirectoryName(typeof(BepInExSplashScreenPatcher).Assembly.Location) ?? Paths.PatcherPluginPath, "BepInEx.SplashScreen.GUI.exe");
@@ -138,7 +138,7 @@ namespace BepInEx.SplashScreen
                         formatter.Serialize(_pipeServer, message);
                         if (message is LoadEvent e && e == LoadEvent.LoadFinished)
                         {
-                            Logger.LogDebug("Game has started, ending connection");
+                            Logger.LogDebug("Game has started, closing the splash window");
                             break;
                         }
                     }
@@ -148,7 +148,12 @@ namespace BepInEx.SplashScreen
             }
             catch (Exception e)
             {
-                Logger.LogError($"Crash in {nameof(ServerThread)}, aborting. Exception: {e}");
+                var msg = e.ToString();
+                // IOException inside FlushBuffer most likely means that user closed the splashscreen window
+                if (!msg.Contains("FileStream.FlushBuffer"))
+                    Logger.LogError($"Crash in {nameof(ServerThread)}, aborting. Exception: {msg}");
+                else 
+                    Logger.LogDebug("The splash window was closed externally, cleaning up");
             }
             finally
             {

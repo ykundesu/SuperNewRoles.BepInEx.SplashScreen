@@ -48,7 +48,7 @@ namespace BepInEx.SplashScreen
                     AppendToItem(2, DoneStr);
                     AppendToItem(3, WorkingStr);
                     SetStatusMain("Finished loading plugins.");
-                    SetStatusDetail("Waiting for the game to start...\nSome plugins might still be finishing up.");
+                    SetStatusDetail("Waiting for the game to start...\nSome plugins might need more time to finish loading.");
                     break;
                 case LoadEvent.LoadFinished:
                     //AppendToItem(3, "Done");
@@ -80,9 +80,14 @@ namespace BepInEx.SplashScreen
         public void SetIcon(Image icon)
         {
             if (icon != null)
+            {
+                pictureBox1.SizeMode = icon.Height < pictureBox1.Height ? PictureBoxSizeMode.CenterImage : PictureBoxSizeMode.Zoom;
                 pictureBox1.Image = icon;
+            }
             else
+            {
                 HideRow(tableLayoutPanel1.GetRow(pictureBox1));
+            }
         }
 
         private void HideRow(int index)

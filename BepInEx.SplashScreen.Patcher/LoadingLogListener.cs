@@ -79,8 +79,10 @@ namespace BepInEx.SplashScreen
 
         private static IEnumerator DelayedCo()
         {
-            for (int i = 0; i < 10; i++)
+            const int framesUntilFinished = 1;
+            for (int i = 0; i < framesUntilFinished; i++)
                 yield return null;
+
             BepInExSplashScreenPatcher.SendStatus(LoadEvent.LoadFinished);
         }
     }

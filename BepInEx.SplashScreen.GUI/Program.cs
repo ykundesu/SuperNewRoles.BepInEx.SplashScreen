@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -43,6 +45,53 @@ namespace BepInEx.SplashScreen
                     var gameExecutable = gameProcess.MainModule.FileName;
                     _mainForm.SetGameLocation(Path.GetDirectoryName(gameExecutable));
                     _mainForm.SetIcon(IconManager.GetLargeIcon(gameExecutable, true, true).ToBitmap());
+
+                    new Thread(() =>
+                        {
+                            try
+                            {
+                                while (true)
+                                {
+                                    if (_mainForm.Visible)
+                                    {
+                                        // Ignore console window
+                                        if (gameProcess.MainWindowHandle == IntPtr.Zero || gameProcess.MainWindowTitle.StartsWith("BepInEx"))
+                                        {
+                                            gameProcess.Refresh();
+                                        }
+                                        else
+                                        {
+                                            if (!GetWindowRect(new HandleRef(_mainForm, gameProcess.MainWindowHandle), out var rct))
+                                                throw new InvalidOperationException("GetWindowRect failed :(");
+
+                                            if (!default(RECT).Equals(rct))
+                                            {
+                                                var x = rct.Left + (rct.Right - rct.Left) / 2 - _mainForm.Width / 2;
+                                                var y = rct.Top + (rct.Bottom - rct.Top) / 2 - _mainForm.Height / 2;
+                                                var newLocation = new Point(x, y);
+
+                                                if (_mainForm.Location != newLocation)
+                                                    _mainForm.Location = newLocation;
+
+                                                if (_mainForm.FormBorderStyle != FormBorderStyle.None)
+                                                {
+                                                    // At this point the form is snapped to the main game window so prevent user from trying to drag it
+                                                    _mainForm.FormBorderStyle = FormBorderStyle.None;
+                                                    _mainForm.BackColor = Color.White;
+                                                    _mainForm.PerformLayout();
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Thread.Sleep(100);
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                // Not much we can do here, it's not critical either way
+                            }
+                        })
+                    { IsBackground = true }.Start();
                 }
                 catch (Exception e)
                 {
@@ -95,6 +144,20 @@ namespace BepInEx.SplashScreen
                 }
             }
             Environment.Exit(0);
+        }
+
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(HandleRef hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;        // x position of upper-left corner
+            public int Top;         // y position of upper-left corner
+            public int Right;       // x position of lower-right corner
+            public int Bottom;      // y position of lower-right corner
         }
     }
 }
