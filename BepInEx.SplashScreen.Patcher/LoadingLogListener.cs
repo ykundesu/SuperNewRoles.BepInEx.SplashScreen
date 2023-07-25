@@ -20,7 +20,7 @@ namespace BepInEx.SplashScreen
         public void Dispose()
         {
             _disposed = true;
-            // This is not thread safe and can cause collection modifiex exceptions in random places. If called from inside a LogEvent it's 100% going to happen.
+            // todo This is not thread safe and can cause collection modifiex exceptions in random places. If called from inside a LogEvent it's 100% going to happen.
             // Logger.Listeners.Remove(this);
         }
 
@@ -34,45 +34,27 @@ namespace BepInEx.SplashScreen
                 {
                     switch (message)
                     {
-                        case "Preloader started":
-                            BepInExSplashScreenPatcher.SendStatus(LoadEvent.PreloaderStart);
-                            break;
-                        case "Preloader finished":
-                            BepInExSplashScreenPatcher.SendStatus(LoadEvent.PreloaderFinish);
-                            break;
-
-                        case "Chainloader started":
-                            BepInExSplashScreenPatcher.SendStatus(LoadEvent.ChainloaderStart);
-                            break;
                         case "Chainloader startup complete":
-                            BepInExSplashScreenPatcher.SendStatus(LoadEvent.ChainloaderFinish);
-
+                            // Nothing to log after this point
                             Dispose();
 
+                            // Wait until the first frame finishes to close the splash screen
                             // Have to do this indirectly to avoid referencing the MonoBehaviour class
                             var threadingHelper = Traverse.CreateWithType("BepInEx.ThreadingHelper").Property("Instance");
-                            threadingHelper.Method("StartSyncInvoke", new Type[] { typeof(Action) }).GetValue(new Action(() =>
-                            {
-                                threadingHelper.Method("StartCoroutine", new Type[] { typeof(IEnumerator) }).GetValue(DelayedCo());
-                                // BepInExSplashScreenPatcher.SendStatus(LoadEvent.LoadFinished);
-                            }));
-                            break;
+                            threadingHelper.Method("StartSyncInvoke", new Type[] { typeof(Action) })
+                                           .GetValue(new Action(() => threadingHelper.Method("StartCoroutine", new Type[] { typeof(IEnumerator) })
+                                                                                     .GetValue(DelayedCo())));
+                            goto default;
 
                         default:
-                            const string patching = "Patching ";
-                            const string skipping = "Skipping ";
-                            const string loading = "Loading ";
-                            if (message.StartsWith(patching) || message.StartsWith(loading))
-                            {
                                 BepInExSplashScreenPatcher.SendMessage(message);
-                            }
                             break;
                     }
                 }
                 catch (Exception e)
                 {
                     BepInExSplashScreenPatcher.Logger.LogError($"Crash in {nameof(LogEvent)}, aborting. Exception: {e}");
-                    BepInExSplashScreenPatcher.Dispose();
+                    BepInExSplashScreenPatcher.Kill();
                 }
             }
         }
@@ -83,7 +65,7 @@ namespace BepInEx.SplashScreen
             for (int i = 0; i < framesUntilFinished; i++)
                 yield return null;
 
-            BepInExSplashScreenPatcher.SendStatus(LoadEvent.LoadFinished);
+            BepInExSplashScreenPatcher.Kill();
         }
     }
 }

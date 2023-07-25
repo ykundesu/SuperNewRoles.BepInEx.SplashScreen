@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Threading;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -16,20 +17,15 @@ namespace BepInEx.SplashScreen
 {
     public static class BepInExSplashScreenPatcher
     {
-        public const string PipeName = "BepInEx.SplashScreen_Pipe";
-        public const int ConnectionTimeoutMs = 5000;
-
         internal static readonly ManualLogSource Logger = Logging.Logger.CreateLogSource("BepInEx.SplashScreen");
 
-        private static readonly Queue _StatusQueue = Queue.Synchronized(new Queue(4));
-        private static string _lastMessage;
+        private static readonly Queue _StatusQueue = Queue.Synchronized(new Queue(10, 2));
+
         private static LoadingLogListener _logListener;
 
         private static int _initialized;
-        private static NamedPipeServerStream _pipeServer;
-        private static Process _guiProcess;
 
-        private static LoadEvent _highestSent = LoadEvent.None;
+        private static Process _guiProcess;
 
         public static IEnumerable<string> TargetDLLs
         {
@@ -64,119 +60,112 @@ namespace BepInEx.SplashScreen
 
                 Logger.Log(LogLevel.Debug, "Starting GUI process: " + guiExecutablePath);
 
+                var psi = new ProcessStartInfo(guiExecutablePath, Process.GetCurrentProcess().Id.ToString())
+                {
+                    UseShellExecute = false,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8,
+                };
+                _guiProcess = Process.Start(psi);
+
                 var statusServer = new Thread(ServerThread);
                 statusServer.IsBackground = true;
                 statusServer.Start();
-
-                _guiProcess = Process.Start(guiExecutablePath, Process.GetCurrentProcess().Id.ToString());
-
-                SendStatus(LoadEvent.PreloaderStart);
 
                 _logListener = LoadingLogListener.StartListening();
             }
             catch (Exception e)
             {
                 Logger.LogError("Failed to start GUI: " + e);
-                Dispose();
+                Kill();
             }
-        }
-
-        internal static void SendStatus(LoadEvent e)
-        {
-#if DEBUG
-            Console.WriteLine($"send {e}  current: {_StatusQueue.Count} {string.Join(", ", _StatusQueue.Cast<LoadEvent>().Select(x => x.ToString()).ToArray())}");
-#endif
-            // hack: For some reason PreloaderFinish can be sent before PreloaderStart, and then again after, so do this to get rid of the first one.
-            if (e <= _highestSent)
-                return;
-            _highestSent = e;
-
-            _StatusQueue.Enqueue(e);
         }
 
         internal static void SendMessage(string message)
         {
-            // Throttle messages
-            _lastMessage = message;
+            _StatusQueue.Enqueue(message);
         }
 
         private static void ServerThread()
         {
             try
             {
-                _pipeServer = new NamedPipeServerStream(PipeName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.None);
+                _guiProcess.Exited += (sender, args) => Kill();
 
-                var waiting = true;
+                _guiProcess.OutputDataReceived += (sender, args) => Logger.Log(LogLevel.Debug, "[GUI] " + args.Data.Replace('\t', '\n'));
+                _guiProcess.BeginOutputReadLine();
 
-                _pipeServer.BeginWaitForConnection(_ => waiting = false, null);
+                _guiProcess.ErrorDataReceived += (sender, args) => Logger.Log(LogLevel.Error, "[GUI] " + args.Data.Replace('\t', '\n'));
+                _guiProcess.BeginErrorReadLine();
 
-                var sw = Stopwatch.StartNew();
-                while (waiting)
-                {
-                    if (sw.Elapsed > TimeSpan.FromMilliseconds(ConnectionTimeoutMs))
-                    {
-                        _guiProcess?.Kill();
-                        throw new TimeoutException("GUI did not connect");
-                    }
-
-                    Thread.Sleep(30);
-                }
+                _guiProcess.StandardInput.AutoFlush = false;
 
                 Logger.LogDebug("Connected to the GUI");
 
-                var formatter = new BinaryFormatter();
-                while (_pipeServer.IsConnected)
+                var any = false;
+                while (!_guiProcess.HasExited)
                 {
-                    var status = Interlocked.Exchange(ref _lastMessage, null);
-                    if (status != null)
-                        formatter.Serialize(_pipeServer, status);
-
-                    while (_StatusQueue.Count > 0)
+                    while (_StatusQueue.Count > 0 && _guiProcess.StandardInput.BaseStream.CanWrite)
                     {
-                        var message = _StatusQueue.Dequeue();
-                        Console.WriteLine("actually send " + message);
-                        formatter.Serialize(_pipeServer, message);
-                        if (message is LoadEvent e && e == LoadEvent.LoadFinished)
-                        {
-                            Logger.LogDebug("Game has started, closing the splash window");
-                            break;
-                        }
+                        _guiProcess.StandardInput.WriteLine(_StatusQueue.Dequeue());
+                        any = true;
+                    }
+
+                    if (any)
+                    {
+                        any = false;
+                        _guiProcess.StandardInput.Flush();
                     }
 
                     Thread.Sleep(150);
                 }
             }
+            catch (ThreadAbortException)
+            {
+                // I am die, thank you forever
+            }
             catch (Exception e)
             {
-                var msg = e.ToString();
-                // IOException inside FlushBuffer most likely means that user closed the splashscreen window
-                if (!msg.Contains("FileStream.FlushBuffer"))
-                    Logger.LogError($"Crash in {nameof(ServerThread)}, aborting. Exception: {msg}");
-                else 
-                    Logger.LogDebug("The splash window was closed externally, cleaning up");
+                Logger.LogError($"Crash in {nameof(ServerThread)}, aborting. Exception: {e.ToString()}");
             }
             finally
             {
-                Dispose();
+                Kill();
             }
         }
 
-        internal static void Dispose()
+        internal static void Kill()
         {
             try
             {
-                _pipeServer?.Dispose();
-
-                Logger.Dispose();
-                Logging.Logger.Sources.Remove(Logger);
-
                 _logListener?.Dispose();
 
                 _StatusQueue.Clear();
+                _StatusQueue.TrimToSize();
+
+                try
+                {
+                    if (_guiProcess != null && !_guiProcess.HasExited)
+                    {
+                        Logger.LogDebug("Closing GUI process");
+                        _guiProcess.Kill();
+                    }
+                }
+                catch (Exception)
+                {
+                    // _guiProcess already quit so Kill threw
+                }
+
+                Logger.Dispose();
+                // todo not thread safe
+                // Logging.Logger.Sources.Remove(Logger);
             }
             catch (Exception e)
             {
-                // Welp, no logger to use. This shouldn't ever happen annyways.
+                // Welp, no Logger left to use. This shouldn't ever happen annyways.
                 Console.WriteLine(e);
             }
         }

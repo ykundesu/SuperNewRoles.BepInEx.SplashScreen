@@ -34,12 +34,16 @@ namespace BepInEx.SplashScreen
                     AppendToItem(1, WorkingStr);
                     SetStatusMain("BepInEx patchers are being applied...");
                     break;
-                case LoadEvent.PreloaderFinish:
+                // For some reason PreloaderFinish is unreliable
+                //case LoadEvent.PreloaderFinish:
+                //    checkedListBox1.SetItemChecked(1, true);
+                //    AppendToItem(1, DoneStr);
+                //    SetStatusMain("Finished applying patchers.");
+                //    break;
+                case LoadEvent.ChainloaderStart:
                     checkedListBox1.SetItemChecked(1, true);
                     AppendToItem(1, DoneStr);
-                    SetStatusMain("Finished applying patchers.");
-                    break;
-                case LoadEvent.ChainloaderStart:
+
                     AppendToItem(2, WorkingStr);
                     SetStatusMain("BepInEx plugins are being loaded...");
                     break;
@@ -86,15 +90,8 @@ namespace BepInEx.SplashScreen
             }
             else
             {
-                HideRow(tableLayoutPanel1.GetRow(pictureBox1));
+                pictureBox1.Visible = false;
             }
-        }
-
-        private void HideRow(int index)
-        {
-            var iconRowStyle = tableLayoutPanel1.RowStyles[index];
-            iconRowStyle.SizeType = SizeType.Absolute;
-            iconRowStyle.Height = 0;
         }
 
         public void SetGameLocation(string location)
@@ -105,8 +102,7 @@ namespace BepInEx.SplashScreen
             }
             else
             {
-                HideRow(tableLayoutPanel1.GetRow(button1));
-                button1.Enabled = false;
+                button1.Visible = false;
             }
         }
 
