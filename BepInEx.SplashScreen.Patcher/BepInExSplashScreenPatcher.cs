@@ -47,8 +47,26 @@ namespace BepInEx.SplashScreen
             try
             {
                 var config = (ConfigFile)AccessTools.Property(typeof(ConfigFile), "CoreConfig").GetValue(null, null);
-                if (!config.Bind("SplashScreen", "Enabled", true, "Display a splash screen with information about game load progress on game start-up.").Value)
+
+                var isEnabled = config.Bind("SplashScreen", "Enabled", true, "Display a splash screen with information about game load progress on game start-up.").Value;
+#if DEBUG
+                const bool onlyNoConsoleDefault = false;
+#else
+                const bool onlyNoConsoleDefault = true;
+#endif
+                var consoleNotAllowed = config.Bind("SplashScreen", "OnlyNoConsole", onlyNoConsoleDefault, "Only display the splash screen if the logging console is turned off.").Value;
+
+                if (!isEnabled)
                     return;
+
+                if (consoleNotAllowed)
+                {
+                    if (config.TryGetEntry("Logging.Console", "Enabled", out ConfigEntry<bool> entry) && entry.Value)
+                    {
+                        Logger.LogDebug("Not showing because console is enabled");
+                        return;
+                    }
+                }
 
                 var guiExecutablePath = Path.Combine(Path.GetDirectoryName(typeof(BepInExSplashScreenPatcher).Assembly.Location) ?? Paths.PatcherPluginPath, "BepInEx.SplashScreen.GUI.exe");
 
