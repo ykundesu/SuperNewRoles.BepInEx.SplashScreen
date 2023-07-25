@@ -3,6 +3,9 @@ using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 
+#pragma warning disable CS0649
+// ReSharper disable All
+
 namespace BepInEx.SplashScreen
 {
     /// <summary>

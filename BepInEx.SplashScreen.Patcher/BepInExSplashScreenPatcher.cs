@@ -3,9 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using BepInEx.Configuration;
@@ -17,15 +15,13 @@ namespace BepInEx.SplashScreen
 {
     public static class BepInExSplashScreenPatcher
     {
-        internal static readonly ManualLogSource Logger = Logging.Logger.CreateLogSource("BepInEx.SplashScreen");
+        public const string Version = "1.0";
 
+        internal static readonly ManualLogSource Logger = Logging.Logger.CreateLogSource("Splash");
         private static readonly Queue _StatusQueue = Queue.Synchronized(new Queue(10, 2));
-
         private static LoadingLogListener _logListener;
-
-        private static int _initialized;
-
         private static Process _guiProcess;
+        private static int _initialized;
 
         public static IEnumerable<string> TargetDLLs
         {
@@ -45,6 +41,7 @@ namespace BepInEx.SplashScreen
 
         public static void Initialize()
         {
+            // Only allow to run once
             if (Interlocked.Exchange(ref _initialized, 1) == 1) return;
 
             try
@@ -71,9 +68,7 @@ namespace BepInEx.SplashScreen
                 };
                 _guiProcess = Process.Start(psi);
 
-                var statusServer = new Thread(ServerThread);
-                statusServer.IsBackground = true;
-                statusServer.Start();
+                new Thread(CommunicationThread) { IsBackground = true }.Start(_guiProcess);
 
                 _logListener = LoadingLogListener.StartListening();
             }
@@ -89,35 +84,37 @@ namespace BepInEx.SplashScreen
             _StatusQueue.Enqueue(message);
         }
 
-        private static void ServerThread()
+        private static void CommunicationThread(object processArg)
         {
             try
             {
-                _guiProcess.Exited += (sender, args) => Kill();
+                var guiProcess = (Process)processArg;
 
-                _guiProcess.OutputDataReceived += (sender, args) => Logger.Log(LogLevel.Debug, "[GUI] " + args.Data.Replace('\t', '\n'));
-                _guiProcess.BeginOutputReadLine();
+                guiProcess.Exited += (sender, args) => Kill();
 
-                _guiProcess.ErrorDataReceived += (sender, args) => Logger.Log(LogLevel.Error, "[GUI] " + args.Data.Replace('\t', '\n'));
-                _guiProcess.BeginErrorReadLine();
+                guiProcess.OutputDataReceived += (sender, args) => Logger.Log(LogLevel.Debug, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                guiProcess.BeginOutputReadLine();
 
-                _guiProcess.StandardInput.AutoFlush = false;
+                guiProcess.ErrorDataReceived += (sender, args) => Logger.Log(LogLevel.Error, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                guiProcess.BeginErrorReadLine();
 
-                Logger.LogDebug("Connected to the GUI");
+                guiProcess.StandardInput.AutoFlush = false;
+
+                Logger.LogDebug("Connected to the GUI process");
 
                 var any = false;
-                while (!_guiProcess.HasExited)
+                while (!guiProcess.HasExited)
                 {
-                    while (_StatusQueue.Count > 0 && _guiProcess.StandardInput.BaseStream.CanWrite)
+                    while (_StatusQueue.Count > 0 && guiProcess.StandardInput.BaseStream.CanWrite)
                     {
-                        _guiProcess.StandardInput.WriteLine(_StatusQueue.Dequeue());
+                        guiProcess.StandardInput.WriteLine(_StatusQueue.Dequeue());
                         any = true;
                     }
 
                     if (any)
                     {
                         any = false;
-                        _guiProcess.StandardInput.Flush();
+                        guiProcess.StandardInput.Flush();
                     }
 
                     Thread.Sleep(150);
@@ -129,7 +126,7 @@ namespace BepInEx.SplashScreen
             }
             catch (Exception e)
             {
-                Logger.LogError($"Crash in {nameof(ServerThread)}, aborting. Exception: {e.ToString()}");
+                Logger.LogError($"Crash in {nameof(CommunicationThread)}, aborting. Exception: {e}");
             }
             finally
             {

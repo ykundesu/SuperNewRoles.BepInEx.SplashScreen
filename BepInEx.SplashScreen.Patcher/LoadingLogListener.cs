@@ -32,24 +32,20 @@ namespace BepInEx.SplashScreen
             {
                 try
                 {
-                    switch (message)
+                    if (message == "Chainloader startup complete")
                     {
-                        case "Chainloader startup complete":
-                            // Nothing to log after this point
-                            Dispose();
+                        // Nothing to log after this point
+                        Dispose();
 
-                            // Wait until the first frame finishes to close the splash screen
-                            // Have to do this indirectly to avoid referencing the MonoBehaviour class
-                            var threadingHelper = Traverse.CreateWithType("BepInEx.ThreadingHelper").Property("Instance");
-                            threadingHelper.Method("StartSyncInvoke", new Type[] { typeof(Action) })
-                                           .GetValue(new Action(() => threadingHelper.Method("StartCoroutine", new Type[] { typeof(IEnumerator) })
-                                                                                     .GetValue(DelayedCo())));
-                            goto default;
-
-                        default:
-                                BepInExSplashScreenPatcher.SendMessage(message);
-                            break;
+                        // Wait until the first frame finishes to close the splash screen
+                        // Have to do this indirectly to avoid referencing the MonoBehaviour class
+                        var threadingHelper = Traverse.CreateWithType("BepInEx.ThreadingHelper").Property("Instance");
+                        threadingHelper.Method("StartSyncInvoke", new[] { typeof(Action) })
+                                       .GetValue(new Action(() => threadingHelper.Method("StartCoroutine", new[] { typeof(IEnumerator) })
+                                                                                 .GetValue(DelayedCo())));
                     }
+
+                    BepInExSplashScreenPatcher.SendMessage(message);
                 }
                 catch (Exception e)
                 {
