@@ -36,15 +36,13 @@ namespace BepInEx.SplashScreen
                     SetStatusMain("BepInEx patchers are being applied...");
                     break;
 
-                // For some reason LoadEvent.PreloaderFinish is unreliable, it can
-                // be called before PreloaderStart, and then again after PreloaderStart.
-                // Fairly safe to treat ChainloaderStart as PreloaderFinish, since if 
-                // it doesn't happen it means preloader failed to patch stuff.
-
-                case LoadEvent.ChainloaderStart:
+                case LoadEvent.PreloaderFinish:
                     checkedListBox1.SetItemChecked(1, true);
                     AppendToItem(1, DoneStr);
+                    SetStatusMain("Finished applying patchers.");
+                    break;
 
+                case LoadEvent.ChainloaderStart:
                     AppendToItem(2, WorkingStr);
                     SetStatusMain("BepInEx plugins are being loaded...");
                     break;

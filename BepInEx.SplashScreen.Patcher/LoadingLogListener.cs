@@ -28,10 +28,11 @@ namespace BepInEx.SplashScreen
         {
             if (_disposed) return;
 
-            if (eventArgs.Source is ManualLogSource mls && mls.SourceName == "BepInEx" && eventArgs.Data is string message)
+            if (eventArgs.Source is ManualLogSource mls && mls.SourceName == "BepInEx" && eventArgs.Data != null)
             {
                 try
                 {
+                    var message = eventArgs.Data as string ?? eventArgs.Data.ToString();
                     if (message == "Chainloader startup complete")
                     {
                         // Nothing to log after this point

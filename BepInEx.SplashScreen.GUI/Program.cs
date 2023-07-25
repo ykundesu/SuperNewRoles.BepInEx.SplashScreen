@@ -120,6 +120,17 @@ namespace BepInEx.SplashScreen
         // Use 10 as a failsafe in case the "x plugins to load" log message is not received for whatever reason
         private static int _pluginCount = 10;
         private static int _pluginProcessedCount = 0;
+        private static LoadEvent _lastLoadEvent = LoadEvent.None;
+
+        private static void RunEventsUpTo(LoadEvent targetEvent)
+        {
+            for (var i = _lastLoadEvent; i < targetEvent; i++)
+            {
+                _mainForm.ProcessEvent(i + 1);
+                _lastLoadEvent = targetEvent;
+            }
+        }
+
         private static void ProcessInputMessage(string message)
         {
             try
@@ -127,25 +138,35 @@ namespace BepInEx.SplashScreen
                 switch (message)
                 {
                     case "Preloader started":
-                        _mainForm.ProcessEvent(LoadEvent.PreloaderStart);
+                        RunEventsUpTo(LoadEvent.PreloaderStart);
                         break;
+                    // For some reason "Preloader finished" is unreliable, it can
+                    // be called before "Preloader started", and then again after.
                     case "Preloader finished":
-                        _mainForm.ProcessEvent(LoadEvent.PreloaderFinish);
+                        //if (_lastLoadEvent == LoadEvent.PreloaderStart)
+                        RunEventsUpTo(LoadEvent.PreloaderFinish);
                         break;
                     case "Chainloader started":
-                        _mainForm.ProcessEvent(LoadEvent.ChainloaderStart);
+                        RunEventsUpTo(LoadEvent.ChainloaderStart);
                         break;
                     case "Chainloader startup complete":
-                        _mainForm.ProcessEvent(LoadEvent.ChainloaderFinish);
+                        RunEventsUpTo(LoadEvent.ChainloaderFinish);
                         break;
 
                     default:
                         const string patching = "Patching ";
                         const string skipping = "Skipping ";
                         const string loading = "Loading ";
-                        if (message.StartsWith(patching) || message.StartsWith(loading))
+                        if (message.StartsWith(patching))
                         {
-                            //todo throttle?
+                            RunEventsUpTo(LoadEvent.PreloaderStart);
+
+                            _mainForm.SetStatusDetail(message);
+                        }
+                        else if (message.StartsWith(loading))
+                        {
+                            RunEventsUpTo(LoadEvent.ChainloaderStart);
+
                             _mainForm.SetStatusDetail(message);
 
                             _pluginProcessedCount++;
@@ -153,12 +174,15 @@ namespace BepInEx.SplashScreen
                         }
                         else if (message.StartsWith(skipping))
                         {
-                            //todo throttle?
+                            RunEventsUpTo(LoadEvent.ChainloaderStart);
+
                             _pluginProcessedCount++;
                             _mainForm.SetPluginProgress((int)Math.Round(100f * (_pluginProcessedCount / (float)_pluginCount)));
                         }
                         else if (message.EndsWith(" plugins to load"))
                         {
+                            RunEventsUpTo(LoadEvent.ChainloaderStart);
+
                             _pluginCount = Math.Max(1, int.Parse(new string(message.TakeWhile(char.IsDigit).ToArray())));
                         }
                         break;
