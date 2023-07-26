@@ -57,13 +57,16 @@ namespace BepInEx.SplashScreen
                 var consoleNotAllowed = config.Bind("SplashScreen", "OnlyNoConsole", onlyNoConsoleDefault, "Only display the splash screen if the logging console is turned off.").Value;
 
                 if (!isEnabled)
+                {
+                    Logger.LogDebug("Not showing splash because the Enabled setting is off");
                     return;
+                }
 
                 if (consoleNotAllowed)
                 {
                     if (config.TryGetEntry("Logging.Console", "Enabled", out ConfigEntry<bool> entry) && entry.Value)
                     {
-                        Logger.LogDebug("Not showing because console is enabled");
+                        Logger.LogDebug("Not showing splash because the console is enabled");
                         return;
                     }
                 }
