@@ -1,49 +1,25 @@
-﻿using System;
+﻿#if !GUI
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Mono.Cecil;
 
 namespace BepInEx.SplashScreen
 {
-    public static class BepInExSplashScreenPatcher
+    public static class SplashScreenController
     {
-        public const string Version = "1.0";
-
         internal static readonly ManualLogSource Logger = Logging.Logger.CreateLogSource("Splash");
         private static readonly Queue _StatusQueue = Queue.Synchronized(new Queue(10, 2));
         private static LoadingLogListener _logListener;
         private static Process _guiProcess;
-        private static int _initialized;
 
-        public static IEnumerable<string> TargetDLLs
+        public static void SpawnSplash()
         {
-            get
-            {
-                // Use whatever gets us to run faster, or at all
-                Initialize();
-                return Enumerable.Empty<string>();
-            }
-        }
-
-        public static void Patch(AssemblyDefinition _)
-        {
-            // Use whatever gets us to run faster, or at all
-            Initialize();
-        }
-
-        public static void Initialize()
-        {
-            // Only allow to run once
-            if (Interlocked.Exchange(ref _initialized, 1) == 1) return;
-
             try
             {
                 var config = (ConfigFile)AccessTools.Property(typeof(ConfigFile), "CoreConfig").GetValue(null, null);
@@ -71,7 +47,7 @@ namespace BepInEx.SplashScreen
                     }
                 }
 
-                var guiExecutablePath = Path.Combine(Path.GetDirectoryName(typeof(BepInExSplashScreenPatcher).Assembly.Location) ?? Paths.PatcherPluginPath, "BepInEx.SplashScreen.GUI.exe");
+                var guiExecutablePath = Path.Combine(Path.GetDirectoryName(typeof(SplashScreenController).Assembly.Location) ?? Paths.PatcherPluginPath, "BepInEx.SplashScreen.GUI.exe");
 
                 if (!File.Exists(guiExecutablePath))
                     throw new FileNotFoundException("Executable not found or inaccessible at " + guiExecutablePath);
@@ -96,7 +72,7 @@ namespace BepInEx.SplashScreen
             catch (Exception e)
             {
                 Logger.LogError("Failed to start GUI: " + e);
-                Kill();
+                KillSplash();
             }
         }
 
@@ -111,12 +87,18 @@ namespace BepInEx.SplashScreen
             {
                 var guiProcess = (Process)processArg;
 
-                guiProcess.Exited += (sender, args) => Kill();
+                guiProcess.Exited += (sender, args) => KillSplash();
 
-                guiProcess.OutputDataReceived += (sender, args) => Logger.Log(LogLevel.Debug, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                guiProcess.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) Logger.Log(LogLevel.Debug, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                };
                 guiProcess.BeginOutputReadLine();
 
-                guiProcess.ErrorDataReceived += (sender, args) => Logger.Log(LogLevel.Error, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                guiProcess.ErrorDataReceived += (sender, args) =>
+                {
+                    if (args.Data != null) Logger.Log(LogLevel.Error, "[GUI] " + args.Data.Replace('\t', '\n').TrimEnd('\n'));
+                };
                 guiProcess.BeginErrorReadLine();
 
                 guiProcess.StandardInput.AutoFlush = false;
@@ -147,15 +129,15 @@ namespace BepInEx.SplashScreen
             }
             catch (Exception e)
             {
-                Logger.LogError($"Crash in {nameof(CommunicationThread)}, aborting. Exception: {e}");
+                Logger.LogError((object)$"Crash in {nameof(CommunicationThread)}, aborting. Exception: {e}");
             }
             finally
             {
-                Kill();
+                KillSplash();
             }
         }
 
-        internal static void Kill()
+        internal static void KillSplash()
         {
             try
             {
@@ -189,3 +171,4 @@ namespace BepInEx.SplashScreen
         }
     }
 }
+#endif

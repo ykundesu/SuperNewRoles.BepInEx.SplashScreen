@@ -2,7 +2,6 @@
 using System.Runtime.InteropServices;
 using BepInEx.SplashScreen;
 
-[assembly: AssemblyTitle("BepInEx.SplashScreen.Patcher")]
 [assembly: AssemblyDescription("Splash screen that shows loading progress when a game patched with BepInEx is loading.")]
 [assembly: AssemblyCompany("https://github.com/BepInEx/BepInEx.SplashScreen")]
 [assembly: AssemblyProduct("BepInEx.SplashScreen")]
@@ -11,4 +10,4 @@ using BepInEx.SplashScreen;
 [assembly: ComVisible(false)]
 [assembly: Guid("449b9f51-bbe5-4d4a-8936-e0a3081d79cb")]
 
-[assembly: AssemblyVersion(BepInExSplashScreenPatcher.Version)]
+[assembly: AssemblyVersion(Metadata.Version)]
