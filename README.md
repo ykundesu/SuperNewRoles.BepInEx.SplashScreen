@@ -1,15 +1,15 @@
 ![Splash screen preview](https://github.com/BepInEx/BepInEx.SplashScreen/assets/39247311/07831558-91e7-48fa-a2de-fc3c6d29a731)
 
 # BepInEx Loading Progress Splash Screen
-A BepInEx 5.x patcher that displays a loading screen on game startup with information about patchers and plugins being currently loaded. It's best suited for games where patchers and plugins take a long time to initialize.
+A BepInEx patcher that displays a loading screen on game startup with information about patchers and plugins being currently loaded. It's best suited for games where patchers and plugins take a long time to initialize.
 
 This patcher is mostly meant for inclusion in modpacks to give end-users immediate feedback after starting a heavily modded game. It can sometimes take a long time for the game window to appear and/or become responsive - especially on slow systems - which can be interpretted by the user as the game crashing.
 
 The patcher and GUI app have evolved from a very old version of [risk-of-thunder/BepInEx.GUI](https://github.com/risk-of-thunder/BepInEx.GUI), though at this point most of the code has been rewritten and this version works in all games. That being said, if you are modding Risk Of Rain 2, use risk-of-thunder/BepInEx.GUI for a better experience.
 
 ## How to use
-1. Install [BepInEx](https://github.com/BepInEx/BepInEx) 5.4.11 or later (only 5.x family is supported).
-2. Download latest release.
+1. Install [BepInEx](https://github.com/BepInEx/BepInEx) 5.4.11 or later, or 6.0.0-be.674 or later (works on both mono and IL2CPP).
+2. Download latest release for your BepInEx version.
 3. Extract the release so that the patcher files end up inside `BepInEx\patchers`.
 4. You should now see the splash screen appear on game start-up, assuming BepInEx is configured properly.
 
