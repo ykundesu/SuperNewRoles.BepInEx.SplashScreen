@@ -94,6 +94,12 @@ namespace BepInEx.SplashScreen
                             timer.Start();
                         }
                     }
+                    // Unreliable but might catch some cases where chainloader fails to run, which results in splash screen not closing
+                    else if (message.StartsWith("Failed to run [BepInEx.Chainloader]", StringComparison.Ordinal) || string.Equals(message, "Could not run preloader!", StringComparison.Ordinal))
+                    {
+                        Dispose();
+                        SplashScreenController.KillSplash();
+                    }
 
                     SplashScreenController.SendMessage(message);
                 }
