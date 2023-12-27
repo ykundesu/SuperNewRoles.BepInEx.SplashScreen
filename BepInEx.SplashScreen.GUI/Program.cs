@@ -16,6 +16,8 @@ namespace BepInEx.SplashScreen
     {
         private static SplashScreen _mainForm;
 
+        private static readonly System.Timers.Timer _AliveTimer = new System.Timers.Timer(15000);
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -62,6 +64,23 @@ namespace BepInEx.SplashScreen
                     _mainForm.SetIcon(IconManager.GetLargeIcon(gameExecutable, true, true).ToBitmap());
 
                     BeginSnapPositionToGameWindow(gameProcess);
+
+                    // If log messages stop coming, preloader/chainloader has crashed or is stuck
+                    _AliveTimer.AutoReset = false;
+                    _AliveTimer.Elapsed += (_, __) =>
+                    {
+                        try
+                        {
+                            Log("Stopped receiving log messages from the game, assuming preloader/chainloader has crashed or is stuck", true);
+                        }
+                        catch (Exception e)
+                        {
+                            // ¯\_(ツ)_/¯
+                            Debug.Fail(e.ToString());
+                        }
+                        Environment.Exit(3);
+                    };
+                    _AliveTimer.Start();
                 }
                 catch (Exception e)
                 {
@@ -107,6 +126,10 @@ namespace BepInEx.SplashScreen
                 {
                     while (inStream.CanRead && !gameProcess.HasExited)
                     {
+                        // Still receiving log messages, so preloader/chainloader is still alive and loading
+                        _AliveTimer.Stop();
+                        _AliveTimer.Start();
+
                         ProcessInputMessage(inReader.ReadLine());
                     }
                 }
