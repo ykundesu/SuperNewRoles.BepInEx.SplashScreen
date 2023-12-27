@@ -49,7 +49,18 @@ namespace BepInEx.SplashScreen
                         var startInvokeM = threadingHelper.Method("StartSyncInvoke", new[] { typeof(Action) });
                         if (startInvokeM.MethodExists())
                         {
-                            startInvokeM.GetValue(new Action(() => threadingHelper.Method("StartCoroutine", new[] { typeof(IEnumerator) }).GetValue(DelayedCo())));
+                            startInvokeM.GetValue(new Action(() =>
+                            {
+                                try
+                                {
+                                    threadingHelper.Method("StartCoroutine", new[] { typeof(IEnumerator) }).GetValue(DelayedCo());
+                                }
+                                catch (Exception e)
+                                {
+                                    SplashScreenController.Logger.LogError("Unexpected crash when trying to StartCoroutine: " + e);
+                                    SplashScreenController.KillSplash();
+                                }
+                            }));
                         }
                         else
                         {
@@ -58,17 +69,24 @@ namespace BepInEx.SplashScreen
                             var timer = new System.Timers.Timer(500);
                             timer.Elapsed += (_, __) =>
                             {
-                                if (currentProcess.Responding)
+                                try
                                 {
                                     timer.Stop();
+                                    if (currentProcess.Responding)
+                                    {
                                     timer.Dispose();
                                     SplashScreenController.KillSplash();
                                 }
                                 else
                                 {
                                     SplashScreenController.Logger.LogDebug("Process not responding, waiting...");
-                                    timer.Stop();
                                     timer.Start();
+                                }
+                                }
+                                catch (Exception e)
+                                {
+                                    SplashScreenController.Logger.LogError("Unexpected crash in timer.Elapsed: " + e);
+                                    SplashScreenController.KillSplash();
                                 }
                             };
                             timer.AutoReset = false;
