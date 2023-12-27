@@ -72,16 +72,17 @@ namespace BepInEx.SplashScreen
                                 try
                                 {
                                     timer.Stop();
+                                    currentProcess.Refresh();
                                     if (currentProcess.Responding)
                                     {
-                                    timer.Dispose();
-                                    SplashScreenController.KillSplash();
-                                }
-                                else
-                                {
-                                    SplashScreenController.Logger.LogDebug("Process not responding, waiting...");
-                                    timer.Start();
-                                }
+                                        timer.Dispose();
+                                        SplashScreenController.KillSplash();
+                                    }
+                                    else
+                                    {
+                                        SplashScreenController.Logger.LogDebug("Process not responding, waiting...");
+                                        timer.Start();
+                                    }
                                 }
                                 catch (Exception e)
                                 {
