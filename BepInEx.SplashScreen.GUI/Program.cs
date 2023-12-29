@@ -27,6 +27,7 @@ namespace BepInEx.SplashScreen
             try
             {
                 Application.SetCompatibleTextRenderingDefault(false);
+                Application.EnableVisualStyles();
 
                 if (args.Length == 0)
                 {
