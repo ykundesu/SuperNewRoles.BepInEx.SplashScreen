@@ -273,6 +273,11 @@ namespace BepInEx.SplashScreen
                     if (!NativeMethods.GetWindowRect(new HandleRef(_mainForm, gameProcess.MainWindowHandle), out var rct))
                         throw new InvalidOperationException("GetWindowRect failed :(");
 
+                    var foregroundWindow = NativeMethods.GetForegroundWindow();
+                    // The main game window is not responding most of the time, which prevents it from being recognized as the foreground window
+                    // To work around this, check if the currently focused window is the splash window, as it will most likely be the last focused window after user clicks on the game window
+                    _mainForm.TopMost = gameProcess.MainWindowHandle == foregroundWindow || _mainForm.Handle == foregroundWindow;
+
                     // Just in case, don't want to mangle the splash
                     if (default(NativeMethods.RECT).Equals(rct))
                         continue;
@@ -318,6 +323,9 @@ namespace BepInEx.SplashScreen
                 public int Right;       // x position of lower-right corner
                 public int Bottom;      // y position of lower-right corner
             }
+
+            [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+            public static extern IntPtr GetForegroundWindow();
         }
 
         #endregion
