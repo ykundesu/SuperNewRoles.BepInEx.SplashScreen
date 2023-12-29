@@ -50,7 +50,7 @@ namespace BepInEx.SplashScreen
             this.progressBar1.MarqueeAnimationSpeed = 0;
             this.progressBar1.Maximum = 5;
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(268, 31);
+            this.progressBar1.Size = new System.Drawing.Size(282, 31);
             this.progressBar1.Step = 1;
             this.progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.progressBar1.TabIndex = 3;
@@ -61,7 +61,7 @@ namespace BepInEx.SplashScreen
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.pictureBox1.Location = new System.Drawing.Point(8, 8);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(268, 256);
+            this.pictureBox1.Size = new System.Drawing.Size(282, 256);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 5;
             this.pictureBox1.TabStop = false;
@@ -72,7 +72,7 @@ namespace BepInEx.SplashScreen
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button1.Location = new System.Drawing.Point(8, 444);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(268, 34);
+            this.button1.Size = new System.Drawing.Size(282, 34);
             this.button1.TabIndex = 4;
             this.button1.TabStop = false;
             this.button1.Text = "Open game folder";
@@ -93,7 +93,7 @@ namespace BepInEx.SplashScreen
             this.checkedListBox1.Location = new System.Drawing.Point(8, 276);
             this.checkedListBox1.Name = "checkedListBox1";
             this.checkedListBox1.SelectionMode = System.Windows.Forms.SelectionMode.None;
-            this.checkedListBox1.Size = new System.Drawing.Size(268, 60);
+            this.checkedListBox1.Size = new System.Drawing.Size(282, 60);
             this.checkedListBox1.TabIndex = 0;
             this.checkedListBox1.TabStop = false;
             this.checkedListBox1.ThreeDCheckBoxes = true;
@@ -105,7 +105,7 @@ namespace BepInEx.SplashScreen
             this.labelTop.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelTop.Location = new System.Drawing.Point(8, 348);
             this.labelTop.Name = "labelTop";
-            this.labelTop.Size = new System.Drawing.Size(268, 20);
+            this.labelTop.Size = new System.Drawing.Size(282, 20);
             this.labelTop.TabIndex = 1;
             this.labelTop.Text = "BepInEx is initializing...";
             // 
@@ -115,7 +115,7 @@ namespace BepInEx.SplashScreen
             this.labelBot.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelBot.Location = new System.Drawing.Point(8, 368);
             this.labelBot.Name = "labelBot";
-            this.labelBot.Size = new System.Drawing.Size(268, 33);
+            this.labelBot.Size = new System.Drawing.Size(282, 33);
             this.labelBot.TabIndex = 2;
             this.labelBot.Text = "The environment is being set up";
             // 
@@ -124,7 +124,7 @@ namespace BepInEx.SplashScreen
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(8, 264);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(268, 12);
+            this.panel1.Size = new System.Drawing.Size(282, 12);
             this.panel1.TabIndex = 6;
             // 
             // panel2
@@ -132,7 +132,7 @@ namespace BepInEx.SplashScreen
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel2.Location = new System.Drawing.Point(8, 336);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(268, 12);
+            this.panel2.Size = new System.Drawing.Size(282, 12);
             this.panel2.TabIndex = 7;
             // 
             // panel5
@@ -140,7 +140,7 @@ namespace BepInEx.SplashScreen
             this.panel5.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel5.Location = new System.Drawing.Point(8, 432);
             this.panel5.Name = "panel5";
-            this.panel5.Size = new System.Drawing.Size(268, 12);
+            this.panel5.Size = new System.Drawing.Size(282, 12);
             this.panel5.TabIndex = 10;
             // 
             // SplashScreen
@@ -150,7 +150,7 @@ namespace BepInEx.SplashScreen
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.BackColor = System.Drawing.SystemColors.Window;
-            this.ClientSize = new System.Drawing.Size(284, 715);
+            this.ClientSize = new System.Drawing.Size(298, 715);
             this.ControlBox = false;
             this.Controls.Add(this.button1);
             this.Controls.Add(this.panel5);
@@ -161,13 +161,14 @@ namespace BepInEx.SplashScreen
             this.Controls.Add(this.checkedListBox1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.pictureBox1);
+            this.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(300, 100);
             this.Name = "SplashScreen";
-            this.Padding = new System.Windows.Forms.Padding(8);
+            this.Padding = new System.Windows.Forms.Padding(8, 8, 8, 8);
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "The game is loading...";
