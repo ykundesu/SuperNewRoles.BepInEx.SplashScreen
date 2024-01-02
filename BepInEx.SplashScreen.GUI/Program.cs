@@ -245,21 +245,26 @@ namespace BepInEx.SplashScreen
                     if (!_mainForm.Visible && !temporarilyHidden)
                         continue;
 
-                    if (gameProcess.MainWindowHandle == IntPtr.Zero ||
+                    var gameWindowHandle = gameProcess.MainWindowHandle;
+                    var gameWindowTitle = gameProcess.MainWindowTitle;
+
+                    if (gameWindowHandle == IntPtr.Zero ||
                         // Ignore console window
-                        gameProcess.MainWindowTitle.StartsWith("BepInEx") ||
-                        gameProcess.MainWindowTitle.StartsWith("Select BepInEx"))
+                        gameWindowTitle.StartsWith("BepInEx") ||
+                        gameWindowTitle.StartsWith("Select BepInEx"))
                     {
                         // Need to refresh the process if the window handle is not yet valid or it will keep grabbing the old one
+                        _mainForm.TopMost = false;
                         gameProcess.Refresh();
                         continue;
                     }
 
                     // Detect Unity's pre-launch resoultion and hotkey configuration window and hide the splash until it is closed
                     // It seems like it's not possible to localize this window so the title check should be fine? Hopefully?
-                    if (gameProcess.MainWindowTitle.EndsWith(" Configuration"))
+                    if (gameWindowTitle.EndsWith(" Configuration"))
                     {
                         _mainForm.Visible = false;
+                        _mainForm.TopMost = false;
                         temporarilyHidden = true;
                         gameProcess.Refresh();
                         continue;
@@ -271,13 +276,13 @@ namespace BepInEx.SplashScreen
                         _mainForm.Visible = true;
                     }
 
-                    if (!NativeMethods.GetWindowRect(new HandleRef(_mainForm, gameProcess.MainWindowHandle), out var rct))
+                    if (!NativeMethods.GetWindowRect(new HandleRef(_mainForm, gameWindowHandle), out var rct))
                         throw new InvalidOperationException("GetWindowRect failed :(");
 
                     var foregroundWindow = NativeMethods.GetForegroundWindow();
                     // The main game window is not responding most of the time, which prevents it from being recognized as the foreground window
                     // To work around this, check if the currently focused window is the splash window, as it will most likely be the last focused window after user clicks on the game window
-                    _mainForm.TopMost = gameProcess.MainWindowHandle == foregroundWindow || _mainForm.Handle == foregroundWindow;
+                    _mainForm.TopMost = gameWindowHandle == foregroundWindow ||  NativeMethods.IsBorderless(gameWindowHandle);
 
                     // Just in case, don't want to mangle the splash
                     if (default(NativeMethods.RECT).Equals(rct))
@@ -327,6 +332,22 @@ namespace BepInEx.SplashScreen
 
             [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
             public static extern IntPtr GetForegroundWindow();
+
+            [DllImport("user32.dll")]
+            private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+            private static int GWL_STYLE = -16;
+            private static int WS_BORDER = 0x00800000; //window with border
+            private static int WS_DLGFRAME = 0x00400000; //window with double border but no title
+            private static int WS_CAPTION = WS_BORDER | WS_DLGFRAME; //window with a title bar 
+            private static int WS_SYSMENU = 0x00080000; //window menu  
+
+            public static bool IsBorderless(IntPtr windowPtr)
+            {
+                int style = GetWindowLong(windowPtr, GWL_STYLE);
+
+                return (style & WS_CAPTION) == 0 && (style & WS_SYSMENU) == 0;
+            }
         }
 
         #endregion
