@@ -9,4 +9,21 @@
         ChainloaderFinish,
         LoadFinished,
     }
+    public enum SNRLoadEvent
+    {
+        None = 0,
+        RoleloaderStart,
+        RoleloaderFinish,
+        AssetBundleLoadStart,
+        AssetBundleLoadFinish,
+        RpcLoadStart,
+        RpcLoadFinish,
+        CustomOptionLoadStart,
+        CustomOptionLoadFinish,
+        LoadEventListenerStart,
+        LoadEventListenerFinish,
+        LoadTrophyStart,
+        LoadTrophyFinish,
+        LoadFinished,
+    }
 }

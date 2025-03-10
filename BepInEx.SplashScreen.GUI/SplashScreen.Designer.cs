@@ -75,7 +75,7 @@ namespace BepInEx.SplashScreen
             this.button1.Size = new System.Drawing.Size(282, 34);
             this.button1.TabIndex = 4;
             this.button1.TabStop = false;
-            this.button1.Text = "Open game folder";
+            this.button1.Text = "Among Usを開く";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.Button1_Click);
             // 
@@ -86,10 +86,10 @@ namespace BepInEx.SplashScreen
             this.checkedListBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.checkedListBox1.FormattingEnabled = true;
             this.checkedListBox1.Items.AddRange(new object[] {
-            "Initialize environment and BepInEx",
-            "Load and apply patchers",
-            "Load and apply plugins",
-            "Start the game"});
+            "環境とBepInExの初期化",
+            "パッチャーの読み込みと適用",
+            "SuperNewRolesなどの読み込みと適用",
+            "ゲームの開始"});
             this.checkedListBox1.Location = new System.Drawing.Point(8, 276);
             this.checkedListBox1.Name = "checkedListBox1";
             this.checkedListBox1.SelectionMode = System.Windows.Forms.SelectionMode.None;

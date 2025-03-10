@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -31,14 +32,13 @@ namespace BepInEx.SplashScreen
 
                 if (args.Length == 0)
                 {
-                    if (MessageBox.Show("This is a splash screen that shows loading progress when a game patched with BepInEx is loading. It is automatically started and then updated by \"BepInEx.SplashScreen.Patcher.dll\" and can't be opened manually.\n\n" +
-                                        "If you can't see a splash screen when the game is starting:\n" +
-                                        "1 - Make sure that \"BepInEx.SplashScreen.GUI.exe\" and \"BepInEx.SplashScreen.Patcher.dll\" are both present inside the \"BepInEx\\patchers\" folder.\n" +
-                                        "2 - Check if the splash screen isn't disabled in \"BepInEx\\config\\BepInEx.cfg\".\n" +
-                                        "3 - Update BepInEx5 to latest version and make sure that it is running.\n" +
-                                        "4 - If the splash screen still does not appear, check the game log for any errors or exceptions. You can report issues on GitHub.\n\n" +
-                                        "Do you want to open the GitHub repository page of BepInEx.SplashScreen?",
-                                        "BepInEx Loading Progress Splash Screen", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+                    if (MessageBox.Show("これはModの読み込み進捗を表示するためのアプリです。直接開くことはできません。\n\n" +
+                                        "ゲームを開いた時にこれが表示されない場合は確認してね:\n" +
+                                        "1 - \"BepInEx.SplashScreen.GUI.exe\"と\"BepInEx.SplashScreen.Patcher.dll\"がどちらとも\"BepInEx\\patchers\"に入っていることを確認。\n" +
+                                        "2 - \"BepInEx\\config\\BepInEx.cfg\"の設定で、スプラッシュスクリーンが無効になっていないかを確認\n" +
+                                        "3 - もしそれでも表示されない場合は、エラーが発生している可能性があるので、ログを確認してください。GitHubで報告することができます。.\n\n" +
+                                        "Githubを表示しますか？",
+                                        "BepInEx読み込み進捗アプリ.exe", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
                         Process.Start("https://github.com/BepInEx/BepInEx.SplashScreen");
                     return;
                 }
@@ -182,7 +182,11 @@ namespace BepInEx.SplashScreen
                         break;
 
                     default:
-                        if (message.EndsWith(" patcher plugins loaded", StringComparison.Ordinal)) //bep6
+                        if (message.StartsWith("[SNR]"))
+                        {
+                            EventsSNR(message);
+                        }
+                        else if (message.EndsWith(" patcher plugins loaded", StringComparison.Ordinal)) //bep6
                         {
                             RunEventsUpTo(LoadEvent.PreloaderStart);
                         }
@@ -221,6 +225,14 @@ namespace BepInEx.SplashScreen
             catch (Exception e)
             {
                 Log($"Failed to process message \"{message}\": {e}", true);
+            }
+        }
+        private static int _loadedRoles = 0;
+        private static void EventsSNR(string message)
+        {
+            if (message.StartsWith("[SNR][Splash]"))
+            {
+                _mainForm.SetStatusMain(message.Substring(13));
             }
         }
 

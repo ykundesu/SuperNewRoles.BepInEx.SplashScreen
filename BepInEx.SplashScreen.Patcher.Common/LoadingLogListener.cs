@@ -98,6 +98,7 @@ namespace BepInEx.SplashScreen
                     else if (message.StartsWith("Failed to run [BepInEx.Chainloader]", StringComparison.Ordinal) || string.Equals(message, "Could not run preloader!", StringComparison.Ordinal))
                     {
                         Dispose();
+                        System.Threading.Thread.Sleep(10000);
                         SplashScreenController.KillSplash();
                     }
 
@@ -108,6 +109,10 @@ namespace BepInEx.SplashScreen
                     SplashScreenController.Logger.LogError((object)$"Crash in {nameof(LogEvent)}, aborting. Exception: {e}");
                     SplashScreenController.KillSplash();
                 }
+            }
+            else if (eventArgs.Source.SourceName == "SuperNewRoles" && eventArgs.Data != null)
+            {
+                SplashScreenController.SendMessageSNR(eventArgs.Data.ToString());
             }
         }
 

@@ -80,6 +80,10 @@ namespace BepInEx.SplashScreen
         {
             _StatusQueue.Enqueue(message);
         }
+        internal static void SendMessageSNR(string message)
+        {
+            _StatusQueue.Enqueue("[SNR]"+message);
+        }
 
         private static void CommunicationThread(object processArg)
         {

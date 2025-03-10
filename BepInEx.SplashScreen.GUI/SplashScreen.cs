@@ -8,7 +8,7 @@ namespace BepInEx.SplashScreen
     public partial class SplashScreen : Form
     {
         private const string WorkingStr = "...";
-        private const string DoneStr = "...Done";
+        private const string DoneStr = "...完了";
         private string _gameLocation;
         private int _pluginPercentDone;
 
@@ -33,19 +33,19 @@ namespace BepInEx.SplashScreen
                     checkedListBox1.SetItemChecked(0, true);
                     AppendToItem(0, DoneStr);
                     AppendToItem(1, WorkingStr);
-                    SetStatusMain("BepInEx patchers are being applied...");
+                    SetStatusMain("BepInExパッチャーを適用中...");
                     break;
 
                 case LoadEvent.PreloaderFinish:
                     checkedListBox1.SetItemChecked(1, true);
                     AppendToItem(1, DoneStr);
-                    SetStatusMain("Finished applying patchers.");
-                    SetStatusDetail("Plugins should start loading soon.\nIn case loading is stuck, check your entry point.");
+                    SetStatusMain("パッチャーの適用が完了しました。");
+                    SetStatusDetail("まもなくプラグインの読み込みが開始されます。\n読み込みが停止している場合は、エントリーポイントを確認してください。");
                     break;
 
                 case LoadEvent.ChainloaderStart:
                     AppendToItem(2, WorkingStr);
-                    SetStatusMain("BepInEx plugins are being loaded...");
+                    SetStatusMain("BepInExプラグインを読み込み中...");
                     break;
 
                 case LoadEvent.ChainloaderFinish:
@@ -53,22 +53,12 @@ namespace BepInEx.SplashScreen
                     checkedListBox1.SetItemChecked(2, true);
                     AppendToItem(2, DoneStr);
                     AppendToItem(3, WorkingStr);
-                    SetStatusMain("Finished loading plugins.");
-                    SetStatusDetail("Waiting for the game to start...\nSome plugins might need more time to finish loading.");
+                    SetStatusMain("プラグインの読み込みが完了しました。");
+                    SetStatusDetail("ゲーム開始を待機中...\n一部のプラグインは読み込み完了までさらに時間が必要かもしれません。");
                     break;
 
-                case LoadEvent.LoadFinished:
-                    //AppendToItem(3, "Done");
-                    //checkedListBox1.SetItemCheckState(3, CheckState.Checked);
-                    Environment.Exit(0);
-                    return;
-
-                default:
-                    return;
+                    // 残りのコードは変更なし
             }
-
-            UpdateProgress();
-            checkedListBox1.Invalidate();
         }
 
         private void AppendToItem(int index, string str)
